@@ -1,0 +1,19 @@
+# data and weights are NOT stored in git (R7) - weights live on the Hugging Face Hub
+data/
+models/
+*.pt
+*.safetensors
+*.bin
+*.joblib
+*.kv
+*.npy
+*.zip
+
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.gradio/
+flagged/
+.venv/
+venv/
+.DS_Store
