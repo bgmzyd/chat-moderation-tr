@@ -45,4 +45,4 @@ CPU_THREADS = int(os.environ.get("CPU_THREADS", 2))  # fixed for every model
 
 # Hugging Face Hub repo that stores the trained weights (R7: no weights in git).
 # Change this to "<your-hf-username>/chat-moderation-tr-models".
-HF_REPO_ID = os.environ.get("HF_REPO_ID", "YOUR_HF_USERNAME/chat-moderation-tr-models")
+HF_REPO_ID = os.environ.get("HF_REPO_ID", "bgmzydd/chat-moderation-tr-models")
