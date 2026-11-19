@@ -8,7 +8,7 @@ of the ladder can be selected or compared side by side.
 ## Run the application
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/chat-moderation-tr.git
+git clone https://github.com/bgmzyd/chat-moderation-tr.git
 cd chat-moderation-tr
 python -m venv .venv && source .venv/bin/activate      # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
