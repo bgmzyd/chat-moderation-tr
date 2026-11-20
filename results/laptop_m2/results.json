@@ -1,0 +1,228 @@
+{
+  "test_set": "OffensEval-TR 2020 official test",
+  "n_test": 3528,
+  "off_ratio": 0.2029,
+  "latency_budget_ms": 50.0,
+  "hardware": {
+    "cpu": "Apple M2",
+    "logical_cores": 8,
+    "torch_threads": 2,
+    "python": "3.11.18",
+    "torch": "2.15.0",
+    "os": "macOS-14.1.1-arm64-arm-64bit"
+  },
+  "models": [
+    {
+      "key": "lexicon",
+      "model": "Rule: edit-distance lexicon matcher",
+      "threshold": 0.5,
+      "macro_f1": 0.635,
+      "accuracy": 0.7874,
+      "off_precision": 0.468,
+      "off_recall": 0.3478,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2529,
+          283
+        ],
+        [
+          467,
+          249
+        ]
+      ],
+      "size_mb": 0.0,
+      "latency_mean_ms": 0.26,
+      "latency_median_ms": 0.21,
+      "latency_p95_ms": 0.69,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 0.8
+    },
+    {
+      "key": "tfidf",
+      "model": "Baseline: tf-idf + logistic regression",
+      "threshold": 0.57,
+      "macro_f1": 0.77,
+      "accuracy": 0.8574,
+      "off_precision": 0.6672,
+      "off_recall": 0.5936,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2600,
+          212
+        ],
+        [
+          291,
+          425
+        ]
+      ],
+      "size_mb": 2.58,
+      "latency_mean_ms": 0.73,
+      "latency_median_ms": 0.69,
+      "latency_p95_ms": 0.93,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 0.6
+    },
+    {
+      "key": "w2v_ffn",
+      "model": "NN: own word2vec + feed-forward net",
+      "threshold": 0.54,
+      "macro_f1": 0.6711,
+      "accuracy": 0.7968,
+      "off_precision": 0.4992,
+      "off_recall": 0.4399,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2496,
+          316
+        ],
+        [
+          401,
+          315
+        ]
+      ],
+      "size_mb": 12.19,
+      "latency_mean_ms": 0.1,
+      "latency_median_ms": 0.09,
+      "latency_p95_ms": 0.18,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 0.2
+    },
+    {
+      "key": "bert_fp32",
+      "model": "Transformer: BERTurk (FP32)",
+      "threshold": 0.58,
+      "macro_f1": 0.8081,
+      "accuracy": 0.8829,
+      "off_precision": 0.7488,
+      "off_recall": 0.6369,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2659,
+          153
+        ],
+        [
+          260,
+          456
+        ]
+      ],
+      "size_mb": 422.72,
+      "latency_mean_ms": 42.81,
+      "latency_median_ms": 41.98,
+      "latency_p95_ms": 52.07,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 87.3
+    },
+    {
+      "key": "bert_int8",
+      "model": "Quantized: BERTurk INT8 (PyTorch dynamic)",
+      "threshold": 0.34,
+      "macro_f1": 0.8116,
+      "accuracy": 0.8804,
+      "off_precision": 0.7162,
+      "off_recall": 0.6802,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2619,
+          193
+        ],
+        [
+          229,
+          487
+        ]
+      ],
+      "size_mb": 178.14,
+      "latency_mean_ms": 36.63,
+      "latency_median_ms": 27.96,
+      "latency_p95_ms": 76.62,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 289.0
+    },
+    {
+      "key": "bert_onnx_int8",
+      "model": "Quantized: BERTurk INT8 (ONNX Runtime)",
+      "threshold": 0.61,
+      "macro_f1": 0.8107,
+      "accuracy": 0.8861,
+      "off_precision": 0.7679,
+      "off_recall": 0.6285,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2676,
+          136
+        ],
+        [
+          266,
+          450
+        ]
+      ],
+      "size_mb": 106.65,
+      "latency_mean_ms": 10.47,
+      "latency_median_ms": 7.91,
+      "latency_p95_ms": 22.77,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 94.1
+    },
+    {
+      "key": "distil_fp32",
+      "model": "Distilled student: DistilBERTurk (FP32)",
+      "threshold": 0.45,
+      "macro_f1": 0.7961,
+      "accuracy": 0.8776,
+      "off_precision": 0.744,
+      "off_recall": 0.6047,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2663,
+          149
+        ],
+        [
+          283,
+          433
+        ]
+      ],
+      "size_mb": 260.48,
+      "latency_mean_ms": 18.07,
+      "latency_median_ms": 18.71,
+      "latency_p95_ms": 21.12,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 42.4
+    },
+    {
+      "key": "distil_onnx_int8",
+      "model": "Quantized student: DistilBERTurk INT8 (ONNX Runtime)",
+      "threshold": 0.28,
+      "macro_f1": 0.7966,
+      "accuracy": 0.8747,
+      "off_precision": 0.7188,
+      "off_recall": 0.6285,
+      "confusion_matrix[[TN,FP],[FN,TP]]": [
+        [
+          2636,
+          176
+        ],
+        [
+          266,
+          450
+        ]
+      ],
+      "size_mb": 65.89,
+      "latency_mean_ms": 5.26,
+      "latency_median_ms": 3.96,
+      "latency_p95_ms": 11.48,
+      "latency_runs": 200,
+      "within_budget": true,
+      "test_pass_seconds": 47.5
+    }
+  ],
+  "bert_int8_vs_bert_fp32_prediction_agreement": 0.977,
+  "bert_onnx_int8_vs_bert_fp32_prediction_agreement": 0.985,
+  "distil_fp32_vs_bert_fp32_prediction_agreement": 0.9317,
+  "distil_onnx_int8_vs_distil_fp32_prediction_agreement": 0.9779
+}
