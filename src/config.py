@@ -18,14 +18,16 @@ VAL_FRACTION = 0.10          # carved (stratified) from the official training se
 LABELS = ["NOT", "OFF"]      # 0 = clean, 1 = offensive
 
 # ---------------------------------------------------------------- models
-MODEL_KEYS = ["lexicon", "tfidf", "w2v_ffn", "bert_fp32", "bert_int8"]
+MODEL_KEYS = ["lexicon", "tfidf", "w2v_ffn", "bert_fp32", "bert_int8", "bert_onnx_int8"]
 MODEL_NAMES = {
     "lexicon":   "Rule: edit-distance lexicon matcher",
     "tfidf":     "Baseline: tf-idf + logistic regression",
     "w2v_ffn":   "NN: own word2vec + feed-forward net",
     "bert_fp32": "Transformer: BERTurk (FP32)",
-    "bert_int8": "Quantized: BERTurk (dynamic INT8)",
+    "bert_int8": "Quantized: BERTurk INT8 (PyTorch dynamic)",
+    "bert_onnx_int8": "Quantized: BERTurk INT8 (ONNX Runtime)",
 }
+APP_MODEL = "bert_onnx_int8"   # the quantized Transformer the application runs (R5)
 MODEL_DIRS = {k: MODELS_DIR / k for k in MODEL_KEYS}
 
 BERT_BASE = os.environ.get("BERT_BASE", "dbmdz/bert-base-turkish-cased")

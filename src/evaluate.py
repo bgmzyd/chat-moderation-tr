@@ -96,13 +96,16 @@ def main():
     pred_df = pd.DataFrame(preds)
     pred_df.to_csv(C.RESULTS_DIR / "predictions_test.csv", index=False)
     extra = {}
-    if "pred_bert_int8" in pred_df and "pred_bert_fp32" in pred_df:
-        extra["int8_vs_fp32_prediction_agreement"] = round(
-            float((pred_df["pred_bert_int8"] == pred_df["pred_bert_fp32"]).mean()), 4)
-        err = pred_df[pred_df["pred_bert_int8"] != pred_df["y"]]
+    for q in ("bert_int8", "bert_onnx_int8"):
+        if f"pred_{q}" in pred_df and "pred_bert_fp32" in pred_df:
+            extra[f"{q}_vs_fp32_prediction_agreement"] = round(
+                float((pred_df[f"pred_{q}"] == pred_df["pred_bert_fp32"]).mean()), 4)
+    app = C.APP_MODEL if f"pred_{C.APP_MODEL}" in pred_df else "bert_int8"
+    if f"pred_{app}" in pred_df:     # failure examples of the model the app runs
+        err = pred_df[pred_df[f"pred_{app}"] != pred_df["y"]]
         err = err.assign(error=np.where(err["y"] == 1, "false negative (missed)", "false positive"))
-        err[["id", "tweet", "y", "p_bert_int8", "error"]].to_csv(
-            C.RESULTS_DIR / "errors_bert_int8.csv", index=False)
+        err[["id", "tweet", "y", f"p_{app}", "error"]].to_csv(
+            C.RESULTS_DIR / f"errors_{app}.csv", index=False)
 
     result = {"test_set": "OffensEval-TR 2020 official test", "n_test": len(test),
               "off_ratio": round(float(y.mean()), 4), "latency_budget_ms": C.LATENCY_BUDGET_MS,
@@ -118,8 +121,8 @@ def main():
         md.append(f"| {r['model']} | {r['macro_f1']:.4f} | {r['accuracy']:.4f} | {r['off_recall']:.4f} | "
                   f"{r['size_mb']:.2f} | {r['latency_mean_ms']:.2f} | {r['latency_p95_ms']:.2f} | "
                   f"{'yes' if r['within_budget'] else 'no'} |")
-    if extra:
-        md.append(f"\nINT8 vs FP32 prediction agreement on test: {extra['int8_vs_fp32_prediction_agreement']:.2%}")
+    for k, v in extra.items():
+        md.append(f"\n{k.replace('_', ' ')}: {v:.2%}")
     (C.RESULTS_DIR / "results_table.md").write_text("\n".join(md) + "\n")
     print("\n" + "\n".join(md))
 

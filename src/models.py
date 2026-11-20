@@ -112,6 +112,35 @@ class BertPredictor(Predictor):
         return np.concatenate(out)
 
 
+class OnnxBertPredictor(Predictor):
+    """Same fine-tuned BERTurk exported to ONNX, graph-fused and INT8-quantized,
+    executed by ONNX Runtime on CPU."""
+
+    def __init__(self):
+        super().__init__("bert_onnx_int8")
+        import onnxruntime as ort
+        from transformers import AutoTokenizer
+        self.tok = AutoTokenizer.from_pretrained(self.dir)
+        so = ort.SessionOptions()
+        so.intra_op_num_threads = C.CPU_THREADS
+        so.inter_op_num_threads = 1
+        so.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+        self.sess = ort.InferenceSession(str(self.dir / "model_int8.onnx"), so,
+                                         providers=["CPUExecutionProvider"])
+        self.inputs = [i.name for i in self.sess.get_inputs()]
+
+    def predict_proba(self, texts, batch=32):
+        from src.train_bert import bert_text
+        out = []
+        for i in range(0, len(texts), batch):
+            enc = self.tok([bert_text(t) for t in texts[i:i + batch]], truncation=True,
+                           max_length=C.BERT_MAX_LEN, padding=True, return_tensors="np")
+            logits = self.sess.run(None, {k: enc[k].astype(np.int64) for k in self.inputs})[0]
+            e = np.exp(logits - logits.max(-1, keepdims=True))
+            out.append((e / e.sum(-1, keepdims=True))[:, 1])
+        return np.concatenate(out)
+
+
 def quantize(model):
     import torch
     return torch.ao.quantization.quantize_dynamic(model.eval(), {torch.nn.Linear},
@@ -121,4 +150,5 @@ def quantize(model):
 def load_model(key) -> Predictor:
     return {"lexicon": LexiconPredictor, "tfidf": TfidfPredictor, "w2v_ffn": W2VFFNPredictor,
             "bert_fp32": lambda: BertPredictor("bert_fp32"),
-            "bert_int8": lambda: BertPredictor("bert_int8")}[key]()
+            "bert_int8": lambda: BertPredictor("bert_int8"),
+            "bert_onnx_int8": OnnxBertPredictor}[key]()

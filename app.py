@@ -21,14 +21,17 @@ from src.hub import download, models_ready
 from src.models import LexiconPredictor, load_model
 from src.normalize import normalize, tokenize
 
-DEFAULT = "bert_int8"
+DEFAULT = C.APP_MODEL
 CHOICES = [(C.MODEL_NAMES[k], k) for k in C.MODEL_KEYS]
 _cache = {}
 
 
 def get_model(key):
     if key not in _cache:
-        _cache[key] = load_model(key)
+        m = load_model(key)
+        for _ in range(3):              # warm-up, so the log never shows a cold first call
+            m.predict_one("merhaba nasılsın")
+        _cache[key] = m
     return _cache[key]
 
 
@@ -86,7 +89,7 @@ def on_send(text, model_key, compare, chat, log):
         return gr.update(), render_chat(chat), log, summary(log), gr.update(), chat, log
     y, conf, p, ms = classify(model_key, text)
     chat = chat + [bubble(text, y, conf, ms, model_key)]
-    log = [[time.strftime("%H:%M:%S"), C.MODEL_NAMES[model_key].split(":")[0],
+    log = [[time.strftime("%H:%M:%S"), C.MODEL_NAMES[model_key].split(":", 1)[-1].strip(),
             "OFFENSIVE" if y else "clean", round(conf, 3), round(ms, 2),
             "✓" if ms <= C.LATENCY_BUDGET_MS else "✗", text[:40]]] + log
     table = gr.update()
@@ -125,7 +128,7 @@ def build():
     with gr.Blocks(title="Real-Time Chat Moderation (TR)", **kw) as demo:
         gr.Markdown("## 🎮 Real-Time Chat Moderation · Turkish\n"
                     "Each message is classified **clean / offensive** live on CPU. "
-                    "Default model: **BERTurk, dynamic INT8 quantized**.")
+                    "Default model: **BERTurk INT8 quantized, ONNX Runtime**.")
         chat_state, log_state = gr.State([]), gr.State([])
         with gr.Row():
             with gr.Column(scale=3):
@@ -137,7 +140,7 @@ def build():
                 gr.Examples(EXAMPLES, inputs=box, label="Try (click, then Send)")
             with gr.Column(scale=2):
                 model = gr.Dropdown(CHOICES, value=DEFAULT, label="Model")
-                compare = gr.Checkbox(False, label="Also run all 5 models side by side")
+                compare = gr.Checkbox(False, label="Also run all models side by side")
                 stats = gr.Markdown(summary([]))
                 log = gr.Dataframe(headers=["time", "model", "label", "conf", "ms", "≤budget", "message"],
                                    value=[], label="Response-time log", interactive=False,
@@ -158,7 +161,7 @@ if __name__ == "__main__":
     a = ap.parse_args()
     if not models_ready():
         download()
-    for k in ("lexicon", DEFAULT):      # warm up: first call is never measured cold
-        get_model(k).predict_one("merhaba")
+    for k in ("lexicon", DEFAULT):      # load + warm up before the UI opens
+        get_model(k)
     kw = {"css": CSS} if _CSS_IN_LAUNCH else {}
     build().launch(share=a.share, server_port=a.port, **kw)
