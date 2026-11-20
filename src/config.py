@@ -18,7 +18,8 @@ VAL_FRACTION = 0.10          # carved (stratified) from the official training se
 LABELS = ["NOT", "OFF"]      # 0 = clean, 1 = offensive
 
 # ---------------------------------------------------------------- models
-MODEL_KEYS = ["lexicon", "tfidf", "w2v_ffn", "bert_fp32", "bert_int8", "bert_onnx_int8"]
+MODEL_KEYS = ["lexicon", "tfidf", "w2v_ffn", "bert_fp32", "bert_int8", "bert_onnx_int8",
+              "distil_fp32", "distil_onnx_int8"]
 MODEL_NAMES = {
     "lexicon":   "Rule: edit-distance lexicon matcher",
     "tfidf":     "Baseline: tf-idf + logistic regression",
@@ -26,8 +27,10 @@ MODEL_NAMES = {
     "bert_fp32": "Transformer: BERTurk (FP32)",
     "bert_int8": "Quantized: BERTurk INT8 (PyTorch dynamic)",
     "bert_onnx_int8": "Quantized: BERTurk INT8 (ONNX Runtime)",
+    "distil_fp32": "Distilled student: DistilBERTurk (FP32)",
+    "distil_onnx_int8": "Quantized student: DistilBERTurk INT8 (ONNX Runtime)",
 }
-APP_MODEL = "bert_onnx_int8"   # the quantized Transformer the application runs (R5)
+APP_MODEL = "distil_onnx_int8"   # the quantized Transformer the application runs (R5)
 MODEL_DIRS = {k: MODELS_DIR / k for k in MODEL_KEYS}
 
 BERT_BASE = os.environ.get("BERT_BASE", "dbmdz/bert-base-turkish-cased")
@@ -35,6 +38,13 @@ BERT_MAX_LEN = 128
 BERT_EPOCHS = int(os.environ.get("BERT_EPOCHS", 3))
 BERT_BATCH = 32
 BERT_LR = 2e-5
+
+# knowledge distillation (teacher = fine-tuned BERTurk, student = 6-layer DistilBERTurk)
+STUDENT_BASE = os.environ.get("STUDENT_BASE", "dbmdz/distilbert-base-turkish-cased")
+DISTIL_EPOCHS = int(os.environ.get("DISTIL_EPOCHS", 3))
+DISTIL_LR = 5e-5
+DISTIL_T = 2.0          # softmax temperature
+DISTIL_ALPHA = 0.5      # weight of the gold-label loss (1 - alpha: teacher loss)
 
 W2V_DIM = 100
 FFN_EPOCHS = int(os.environ.get("FFN_EPOCHS", 40))

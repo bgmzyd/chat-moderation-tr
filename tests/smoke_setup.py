@@ -4,7 +4,8 @@ Creates a small synthetic dataset in the official OffensEval-TR file format and 
 randomly initialised BERT so the whole pipeline can be checked quickly on a CPU:
 
   python tests/smoke_setup.py /tmp/smoke
-  BERT_BASE=/tmp/smoke/tiny-bert BERT_EPOCHS=1 FFN_EPOCHS=3 bash run_pipeline.sh
+  BERT_BASE=/tmp/smoke/tiny-bert STUDENT_BASE=/tmp/smoke/tiny-distil BERT_EPOCHS=1 \
+  DISTIL_EPOCHS=1 FFN_EPOCHS=3 bash run_pipeline.sh
 """
 import random
 import sys
@@ -59,6 +60,16 @@ def main(out):
     cfg = BertConfig(vocab_size=tk.get_vocab_size(), hidden_size=64, num_hidden_layers=2,
                      num_attention_heads=2, intermediate_size=128)
     BertForSequenceClassification(cfg).save_pretrained(d)
+
+    from transformers import DistilBertConfig, DistilBertForSequenceClassification
+    ds = out / "tiny-distil"
+    ds.mkdir(exist_ok=True)
+    tok = BertTokenizerFast(vocab_file=str(d / "vocab.txt"), do_lower_case=False)
+    tok.model_input_names = ["input_ids", "attention_mask"]
+    tok.save_pretrained(ds)
+    dcfg = DistilBertConfig(vocab_size=tk.get_vocab_size(), dim=64, n_layers=2, n_heads=2,
+                            hidden_dim=128)
+    DistilBertForSequenceClassification(dcfg).save_pretrained(ds)
     print("smoke assets in", out)
 
 

@@ -22,3 +22,11 @@ def tune_threshold(y_true, p_off, grid=None):
     scores = [(f1_score(y_true, (p_off >= t).astype(int), average="macro"), t) for t in grid]
     f1, t = max(scores)
     return round(float(t), 2), float(f1)
+
+
+def model_inputs(model, enc):
+    """Keep only the tokenizer outputs the model's forward() accepts
+    (DistilBERT, unlike BERT, takes no token_type_ids)."""
+    import inspect
+    accepted = inspect.signature(model.forward).parameters
+    return {k: v for k, v in enc.items() if k in accepted}

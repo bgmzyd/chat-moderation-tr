@@ -91,7 +91,7 @@ class BertPredictor(Predictor):
         self.torch = torch
         torch.set_num_threads(C.CPU_THREADS)
         self.tok = AutoTokenizer.from_pretrained(self.dir)
-        if key == "bert_fp32":
+        if key in ("bert_fp32", "distil_fp32"):
             self.model = AutoModelForSequenceClassification.from_pretrained(self.dir)
         else:
             cfg = AutoConfig.from_pretrained(self.dir)
@@ -108,7 +108,9 @@ class BertPredictor(Predictor):
             for i in range(0, len(texts), batch):
                 enc = self.tok([bert_text(t) for t in texts[i:i + batch]], truncation=True,
                                max_length=C.BERT_MAX_LEN, padding=True, return_tensors="pt")
-                out.append(self.torch.softmax(self.model(**enc).logits, -1)[:, 1].numpy())
+                from src.utils import model_inputs
+                out.append(self.torch.softmax(self.model(**model_inputs(self.model, enc)).logits,
+                                              -1)[:, 1].numpy())
         return np.concatenate(out)
 
 
@@ -116,8 +118,8 @@ class OnnxBertPredictor(Predictor):
     """Same fine-tuned BERTurk exported to ONNX, graph-fused and INT8-quantized,
     executed by ONNX Runtime on CPU."""
 
-    def __init__(self):
-        super().__init__("bert_onnx_int8")
+    def __init__(self, key="bert_onnx_int8"):
+        super().__init__(key)
         import onnxruntime as ort
         from transformers import AutoTokenizer
         self.tok = AutoTokenizer.from_pretrained(self.dir)
@@ -141,8 +143,21 @@ class OnnxBertPredictor(Predictor):
         return np.concatenate(out)
 
 
+def _select_quant_engine():
+    """Apple-silicon builds of PyTorch start with no quantized engine selected ("none");
+    pick the best available one (x86/fbgemm on Intel/AMD, qnnpack on ARM)."""
+    import torch
+    qb = torch.backends.quantized
+    if qb.engine in (None, "none"):
+        for e in ("x86", "fbgemm", "qnnpack"):
+            if e in qb.supported_engines:
+                qb.engine = e
+                break
+
+
 def quantize(model):
     import torch
+    _select_quant_engine()
     return torch.ao.quantization.quantize_dynamic(model.eval(), {torch.nn.Linear},
                                                   dtype=torch.qint8)
 
@@ -151,4 +166,6 @@ def load_model(key) -> Predictor:
     return {"lexicon": LexiconPredictor, "tfidf": TfidfPredictor, "w2v_ffn": W2VFFNPredictor,
             "bert_fp32": lambda: BertPredictor("bert_fp32"),
             "bert_int8": lambda: BertPredictor("bert_int8"),
-            "bert_onnx_int8": OnnxBertPredictor}[key]()
+            "bert_onnx_int8": lambda: OnnxBertPredictor("bert_onnx_int8"),
+            "distil_fp32": lambda: BertPredictor("distil_fp32"),
+            "distil_onnx_int8": lambda: OnnxBertPredictor("distil_onnx_int8")}[key]()

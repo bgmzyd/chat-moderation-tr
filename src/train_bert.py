@@ -16,7 +16,7 @@ from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
 from src import config as C
 from src.normalize import normalize
 from src.prepare_data import load_split
-from src.utils import set_seed, tune_threshold
+from src.utils import model_inputs, set_seed, tune_threshold
 
 
 def bert_text(t):
@@ -30,7 +30,7 @@ def predict_proba(model, tok, texts, device, batch=64):
     for i in range(0, len(texts), batch):
         enc = tok([bert_text(t) for t in texts[i:i + batch]], truncation=True,
                   max_length=C.BERT_MAX_LEN, padding=True, return_tensors="pt").to(device)
-        out.append(torch.softmax(model(**enc).logits.float(), -1)[:, 1].cpu().numpy())
+        out.append(torch.softmax(model(**model_inputs(model, enc)).logits.float(), -1)[:, 1].cpu().numpy())
     return np.concatenate(out)
 
 

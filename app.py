@@ -128,7 +128,7 @@ def build():
     with gr.Blocks(title="Real-Time Chat Moderation (TR)", **kw) as demo:
         gr.Markdown("## 🎮 Real-Time Chat Moderation · Turkish\n"
                     "Each message is classified **clean / offensive** live on CPU. "
-                    "Default model: **BERTurk INT8 quantized, ONNX Runtime**.")
+                    "Default model: **distilled BERTurk student, INT8, ONNX Runtime**.")
         chat_state, log_state = gr.State([]), gr.State([])
         with gr.Row():
             with gr.Column(scale=3):

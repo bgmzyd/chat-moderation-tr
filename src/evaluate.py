@@ -27,6 +27,13 @@ from src.prepare_data import load_split
 
 
 def cpu_name():
+    if platform.system() == "Darwin":              # macOS: e.g. "Apple M2"
+        import subprocess
+        try:
+            return subprocess.run(["sysctl", "-n", "machdep.cpu.brand_string"],
+                                  capture_output=True, text=True).stdout.strip()
+        except OSError:
+            pass
     try:
         for line in open("/proc/cpuinfo"):
             if line.startswith("model name"):
@@ -96,11 +103,12 @@ def main():
     pred_df = pd.DataFrame(preds)
     pred_df.to_csv(C.RESULTS_DIR / "predictions_test.csv", index=False)
     extra = {}
-    for q in ("bert_int8", "bert_onnx_int8"):
-        if f"pred_{q}" in pred_df and "pred_bert_fp32" in pred_df:
-            extra[f"{q}_vs_fp32_prediction_agreement"] = round(
-                float((pred_df[f"pred_{q}"] == pred_df["pred_bert_fp32"]).mean()), 4)
-    app = C.APP_MODEL if f"pred_{C.APP_MODEL}" in pred_df else "bert_int8"
+    for q, ref in (("bert_int8", "bert_fp32"), ("bert_onnx_int8", "bert_fp32"),
+                   ("distil_fp32", "bert_fp32"), ("distil_onnx_int8", "distil_fp32")):
+        if f"pred_{q}" in pred_df and f"pred_{ref}" in pred_df:
+            extra[f"{q}_vs_{ref}_prediction_agreement"] = round(
+                float((pred_df[f"pred_{q}"] == pred_df[f"pred_{ref}"]).mean()), 4)
+    app = C.APP_MODEL if f"pred_{C.APP_MODEL}" in pred_df else "bert_onnx_int8"
     if f"pred_{app}" in pred_df:     # failure examples of the model the app runs
         err = pred_df[pred_df[f"pred_{app}"] != pred_df["y"]]
         err = err.assign(error=np.where(err["y"] == 1, "false negative (missed)", "false positive"))
